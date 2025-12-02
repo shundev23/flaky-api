@@ -1,0 +1,30 @@
+# --- Go (Backend) ---
+# コンパイルされたバイナリ
+/backend/main
+/backend/main.exe
+/backend/bin/
+
+# 環境変数ファイル（将来用）
+.env
+.env.local
+
+# Airの一時ファイル
+/backend/tmp/
+
+# --- Node.js (Frontend) ---
+# 依存ライブラリ（超重いので絶対コミットしない！）
+node_modules/
+/frontend/node_modules/
+
+# ビルド成果物
+/frontend/dist/
+
+# ログ
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- OS/Editor ---
+.DS_Store
+.vscode/
+.idea/
