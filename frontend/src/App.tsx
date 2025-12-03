@@ -2,7 +2,7 @@
 import { useState } from 'react';
 
 // 👇 Cloud RunのURL
-const API_BASE_URL = "https://flaky-api-310901204016.asia-northeast1.run.app";
+const API_BASE_URL = "https://flaky-api-backend-310901204016.asia-northeast1.run.app";
 
 function App() {
   const [loading, setLoading] = useState(false);
