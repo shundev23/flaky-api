@@ -26,3 +26,7 @@ npm install
 npm run dev
 # UI starts at http://localhost:5173
 ---
+```
+
+## 注意事項
+これはデモ用のアプリであり、SLA（稼働保証）はありません
