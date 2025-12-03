@@ -43,7 +43,7 @@ function App() {
   // JSONが入力されていればBase64化してパラメータに追加
   if (customJsonStr.trim()){
     const base64Json = encodeBase64(customJsonStr);
-    generatedUrl += `&response=${base64Json}`;
+    generatedUrl += `&response=${encodeURIComponent(base64Json)}`;
   }
 
   const callFlakyApi = async () => {

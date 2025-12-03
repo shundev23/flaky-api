@@ -52,12 +52,12 @@ func main() {
 			})
 		}
 
-		// 3.運良く通過したら、指定時間待機
+		// 3.遅延処理
 		if delayMs > 0 {
 			time.Sleep(time.Duration(delayMs) * time.Millisecond)
 		}
 
-		// 4.成功レスポンス
+		// 4.レスポンス生成
 		// カスタムJSONが指定されていたら、デコードして返す
 		if responseBase64 != "" {
 			decodedBytes, err := base64.StdEncoding.DecodeString(responseBase64)
@@ -70,6 +70,7 @@ func main() {
 				}
 			}
 		}
+
 		return c.JSON(http.StatusOK, map[string]string{
 			"message":    "🎉 Success! You survived the chaos.",
 			"delayed_ms": strconv.Itoa(delayMs),
