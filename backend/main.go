@@ -41,8 +41,13 @@ func main() {
 		delayMs, _ := strconv.Atoi(delayParam)
 		failRate, _ := strconv.Atoi(failRateParam)
 		errorCode, err := strconv.Atoi(errorCodeParam) // エラーコードのパース(指定がなければ500にする)
+
 		if err != nil || errorCode == 0 {
 			errorCode = http.StatusInternalServerError // 500
+		}
+
+		if delayMs > 10000 {
+			delayMs = 10000
 		}
 
 		// 2.カオス判定
@@ -51,6 +56,13 @@ func main() {
 				"error":   "💥 Chaos triggered.",
 				"code":    errorCode,
 				"message": http.StatusText(errorCode),
+			})
+		}
+
+		// Base64の文字数が長すぎる場合の処置
+		if len(responseBase64) > 10000 {
+			return c.JSON(http.StatusRequestEntityTooLarge, map[string]string{
+				"error": "Response payload too large",
 			})
 		}
 
