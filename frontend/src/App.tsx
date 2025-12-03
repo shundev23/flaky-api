@@ -10,14 +10,41 @@ function App() {
   const [isError, setIsError] = useState(false);
   const [duration, setDuration] = useState<number | null>(null);
   const [copyMessage, setCopyMessage] = useState(""); // コピー完了メッセージ用
-  const [errorCode, setErrorCode] = useState(500);
   
   // 設定値
-  const [failRate, setFailRate] = useState(50);
+  const [failRate, setFailRate] = useState(0);
   const [delay, setDelay] = useState(1000);
+  const [errorCode, setErrorCode] = useState(500);
+
+  // カスタムJSON用のState
+  const [customJsonStr, setCustomJsonStr] = useState<string>('{\n  "message": "Hello custom world!",\n  "userId": 123\n}')
+
+  // UTF-8対応のBase64エンコード関数
+  const encodeBase64 = (str: string) => {
+  try {
+    // 1. 文字列をUTF-8のバイト列（Uint8Array）に変換
+    const bytes = new TextEncoder().encode(str);
+    
+    // 2. バイト列をバイナリ文字列に変換
+    // (btoaはバイナリ文字列しか受け付けないためこの工程が必要)
+    const binary = Array.from(bytes, (byte) => String.fromCodePoint(byte)).join("");
+    
+    // 3. Base64化
+    return window.btoa(binary);
+  } catch (e) {
+    console.error("Encoding failed", e);
+    return "";
+  }
+};
 
   // ユーザー提供用のURLをリアルタイム生成
-  const generatedUrl = `${API_BASE_URL}/flaky?delay=${delay}&fail_rate=${failRate}&error_code=${errorCode}`;
+  let generatedUrl = `${API_BASE_URL}/flaky?delay=${delay}&fail_rate=${failRate}&error_code=${errorCode}`;
+
+  // JSONが入力されていればBase64化してパラメータに追加
+  if (customJsonStr.trim()){
+    const base64Json = encodeBase64(customJsonStr);
+    generatedUrl += `&response=${base64Json}`;
+  }
 
   const callFlakyApi = async () => {
     setLoading(true);
@@ -91,6 +118,23 @@ function App() {
             </button>
           </div>
           {copyMessage && <p style={{ margin: '5px 0 0', color: 'green', fontSize: '12px' }}>{copyMessage}</p>}
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            返却したいJSONレスポンス
+          </label>
+          <textarea
+            value={customJsonStr}
+            onChange={(e) => setCustomJsonStr(e.target.value)}
+            rows={5}
+            style={{ 
+              width: '100%', padding: '10px', fontFamily: 'monospace', borderRadius: '5px', border: '1px solid #ccc',
+              backgroundColor: '#fafafa'
+            }}
+            placeholder='{"key": "value"}'
+          />
+          <small style={{ color: '#666' }}>※ 入力したJSONがそのままAPIから返ってきます</small>
         </div>
 
         {/* --- 設定スライダー --- */}

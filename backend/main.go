@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -29,24 +31,17 @@ func main() {
 	e.GET("/flaky", func(c echo.Context) error {
 		// 1.クエリパラメータからdelayを取得
 		delayParam := c.QueryParam("delay")
-		failRateParam := c.QueryParam("fail_rate") // 失敗率（0~100）
+		failRateParam := c.QueryParam("fail_rate")   // 失敗率（0~100）
+		errorCodeParam := c.QueryParam("error_code") // フロントから追加したいステータスコードを受け取る
 
-		// フロントから追加したいステータスコードを受け取る
-		errorCodeParam := c.QueryParam("error_code")
+		responseBase64 := c.QueryParam("response")
 
 		delayMs, _ := strconv.Atoi(delayParam)
 		failRate, _ := strconv.Atoi(failRateParam)
-
-		// エラーコードのパース(指定がなければ500にする)
-		errorCode, err := strconv.Atoi(errorCodeParam)
+		errorCode, err := strconv.Atoi(errorCodeParam) // エラーコードのパース(指定がなければ500にする)
 		if err != nil || errorCode == 0 {
 			errorCode = http.StatusInternalServerError // 500
 		}
-
-		// 2.指定された時間だけスリーブする
-		// if delayMs > 0 {
-		// 	time.Sleep(time.Duration(delayMs) * time.Millisecond)
-		// }
 
 		// 2.カオス判定
 		if failRate > 0 && rand.Intn(100) < failRate {
@@ -57,18 +52,24 @@ func main() {
 			})
 		}
 
-		// 3.レスポンスを渡す
-		// return c.JSON(http.StatusOK, map[string]string{
-		// 	"message":    "Sorry for being late!!",
-		// 	"delayed_ms": strconv.Itoa(delayMs),
-		// })
-
 		// 3.運良く通過したら、指定時間待機
 		if delayMs > 0 {
 			time.Sleep(time.Duration(delayMs) * time.Millisecond)
 		}
 
 		// 4.成功レスポンス
+		// カスタムJSONが指定されていたら、デコードして返す
+		if responseBase64 != "" {
+			decodedBytes, err := base64.StdEncoding.DecodeString(responseBase64)
+			if err == nil {
+				// JSONチェック
+				var customData interface{}
+				if jsonErr := json.Unmarshal(decodedBytes, &customData); jsonErr == nil {
+					// 成功していたらJSONをそのまま返す
+					return c.JSON(http.StatusOK, customData)
+				}
+			}
+		}
 		return c.JSON(http.StatusOK, map[string]string{
 			"message":    "🎉 Success! You survived the chaos.",
 			"delayed_ms": strconv.Itoa(delayMs),
