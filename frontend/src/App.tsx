@@ -210,7 +210,7 @@ function App() {
             {isError ? `💥 ${result.status || 'Error'} Failed` : '🎉 200 OK'}
           </h3>
           <p style={{color: 'black'}}><strong>実際の待ち時間:</strong> {duration} ms</p>
-          <pre style={{ overflow: 'auto' }}>{JSON.stringify(result, null, 2)}</pre>
+          <pre style={{ overflow: 'auto', color: 'black' }}>{JSON.stringify(result, null, 2)}</pre>
         </div>
       )}
     </div>
