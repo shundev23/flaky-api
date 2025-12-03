@@ -15,7 +15,8 @@ func main() {
 
 	// CORS設定：フロントエンドからのリクエストに合わせる
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:5173"},
+		// AllowOrigins: []string{"http://localhost:5173"},
+		AllowOrigins: []string{"*"}, // 全てのアクセスを許可するため、ワイルドカードを設定
 		AllowMethods: []string{http.MethodGet, http.MethodPost},
 	}))
 
