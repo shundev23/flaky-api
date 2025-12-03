@@ -1,7 +1,7 @@
 # backend/Dockerfile
 
 # 1. ビルド用ステージ（Goのコンパイラが入った環境）
-FROM golang:1.23-alpine as builder
+FROM golang:1.25-alpine as builder
 
 WORKDIR /app
 

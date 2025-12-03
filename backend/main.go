@@ -31,8 +31,17 @@ func main() {
 		delayParam := c.QueryParam("delay")
 		failRateParam := c.QueryParam("fail_rate") // 失敗率（0~100）
 
+		// フロントから追加したいステータスコードを受け取る
+		errorCodeParam := c.QueryParam("error_code")
+
 		delayMs, _ := strconv.Atoi(delayParam)
 		failRate, _ := strconv.Atoi(failRateParam)
+
+		// エラーコードのパース(指定がなければ500にする)
+		errorCode, err := strconv.Atoi(errorCodeParam)
+		if err != nil || errorCode == 0 {
+			errorCode = http.StatusInternalServerError // 500
+		}
 
 		// 2.指定された時間だけスリーブする
 		// if delayMs > 0 {
@@ -41,9 +50,10 @@ func main() {
 
 		// 2.カオス判定
 		if failRate > 0 && rand.Intn(100) < failRate {
-			return c.JSON(http.StatusInternalServerError, map[string]string{
-				"error":  "💥 BOMB! Random failure triggered.",
-				"status": "500",
+			return c.JSON(errorCode, map[string]interface{}{
+				"error":   "💥 Chaos triggered.",
+				"code":    errorCode,
+				"message": http.StatusText(errorCode),
 			})
 		}
 

@@ -1,15 +1,23 @@
 // frontend/src/App.tsx
 import { useState } from 'react';
 
+// 👇 Cloud RunのURL
+const API_BASE_URL = "https://flaky-api-310901204016.asia-northeast1.run.app";
+
 function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [isError, setIsError] = useState(false);
   const [duration, setDuration] = useState<number | null>(null);
+  const [copyMessage, setCopyMessage] = useState(""); // コピー完了メッセージ用
+  const [errorCode, setErrorCode] = useState(500);
   
   // 設定値
-  const [failRate, setFailRate] = useState(50); // デフォルト50%で失敗させる
+  const [failRate, setFailRate] = useState(50);
   const [delay, setDelay] = useState(1000);
+
+  // ユーザー提供用のURLをリアルタイム生成
+  const generatedUrl = `${API_BASE_URL}/flaky?delay=${delay}&fail_rate=${failRate}&error_code=${errorCode}`;
 
   const callFlakyApi = async () => {
     setLoading(true);
@@ -20,21 +28,19 @@ function App() {
     const startTime = performance.now();
 
     try {
-      // 故障率(fail_rate) と 遅延(delay) をクエリに含める
-      const response = await fetch(`http://localhost:8080/flaky?delay=${delay}&fail_rate=${failRate}`);
+      // 生成されたURLを実際に叩いてみる
+      const response = await fetch(generatedUrl);
       const data = await response.json();
       
       const endTime = performance.now();
       setDuration(Math.round(endTime - startTime));
 
-      // ステータスコードが200系以外ならエラー扱いにする
       if (!response.ok) {
         setIsError(true);
       }
       setResult(data);
 
     } catch (error) {
-      // ネットワークエラーなど
       console.error(error);
       setIsError(true);
       setResult({ error: "Network Error or Server Crash" });
@@ -43,15 +49,53 @@ function App() {
     }
   };
 
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedUrl);
+    setCopyMessage("✅ コピーしました！");
+    setTimeout(() => setCopyMessage(""), 2000); // 2秒後にメッセージを消す
+  };
+
   return (
     <div style={{ padding: '40px', maxWidth: '600px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-      <h1>😈 Chaos API Tester</h1>
+      <h1>😈 Flaky API Generator</h1>
+      <p style={{ color: '#666' }}>
+        意図的に「遅延」や「エラー」が発生するAPIのURLを発行します。<br/>
+        開発中のアプリのローディングやエラー処理のテストに使ってください。
+      </p>
       
-      <div style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '10px', background: '#f9f9f9' }}>
+      <div style={{ border: '1px solid #ddd', padding: '25px', borderRadius: '12px', background: '#fff', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
         
-        {/* 遅延の設定 */}
+        {/* --- URL生成エリア (ここが新機能！) --- */}
+        <div style={{ marginBottom: '30px', background: '#f0f4f8', padding: '15px', borderRadius: '8px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px', color: '#333' }}>
+            👇 あなた専用のAPIエンドポイント
+          </label>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input 
+              type="text" 
+              value={generatedUrl} 
+              readOnly 
+              style={{ 
+                flex: 1, padding: '10px', borderRadius: '5px', border: '1px solid #ccc',
+                background: '#e9ecef', color: '#555', fontFamily: 'monospace'
+              }}
+            />
+            <button 
+              onClick={copyToClipboard}
+              style={{ 
+                padding: '0 20px', background: '#007bff', color: 'white', border: 'none', 
+                borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold'
+              }}
+            >
+              コピー
+            </button>
+          </div>
+          {copyMessage && <p style={{ margin: '5px 0 0', color: 'green', fontSize: '12px' }}>{copyMessage}</p>}
+        </div>
+
+        {/* --- 設定スライダー --- */}
         <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: 'black' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: "black" }}>
             遅延時間: {delay} ms
           </label>
           <input 
@@ -61,8 +105,7 @@ function App() {
           />
         </div>
 
-        {/* 故障率の設定 */}
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '30px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: failRate > 70 ? 'red' : 'black' }}>
             爆発確率 (Fail Rate): {failRate} %
           </label>
@@ -71,22 +114,48 @@ function App() {
             value={failRate} onChange={(e) => setFailRate(Number(e.target.value))}
             style={{ width: '100%', accentColor: 'red' }} 
           />
-          <small style={{ color: '#666' }}>数値を上げるほど500エラーが出やすくなります</small>
         </div>
 
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            発生させるエラー (Status Code)
+          </label>
+          <select 
+          value={errorCode} 
+          onChange={(e) => setErrorCode(Number(e.target.value))}
+          style={{ 
+            width: '100%', padding: '10px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ccc' 
+          }}
+          >
+            <option value="400">400 Bad Request (不正なリクエスト)</option>
+            <option value="401">401 Unauthorized (未認証・ログアウト)</option>
+            <option value="403">403 Forbidden (権限なし)</option>
+            <option value="404">404 Not Found (見つからない)</option>
+            <option value="408">408 Request Timeout (タイムアウト)</option>
+            <option value="429">429 Too Many Requests (リクエスト過多)</option>
+            <option value="500">500 Internal Server Error (サーバーエラー)</option>
+            <option value="503">503 Service Unavailable (メンテ中)</option>
+            <option value="504">504 Gateway Timeout (応答なし)</option>
+          </select>
+        </div>
+
+        {/* --- テスト実行ボタン --- */}
+        <hr style={{ border: 'none', borderTop: '1px solid #eee', margin: '20px 0' }} />
+        
+        <p style={{ fontSize: '14px', marginBottom: '10px' }}>試してみる：</p>
         <button 
           onClick={callFlakyApi} disabled={loading}
           style={{ 
-            width: '100%', padding: '15px', fontSize: '18px', 
-            background: loading ? '#ccc' : '#222', color: 'white', 
+            width: '100%', padding: '12px', fontSize: '16px', 
+            background: loading ? '#ccc' : '#333', color: 'white', 
             border: 'none', borderRadius: '5px', cursor: loading ? 'not-allowed' : 'pointer'
           }}
         >
-          {loading ? '祈っています...' : 'APIを叩く 👊'}
+          {loading ? '通信中...' : 'この設定でテスト実行 👊'}
         </button>
       </div>
 
-      {/* 結果表示エリア */}
+      {/* --- 結果表示 --- */}
       {result && (
         <div style={{ 
           marginTop: '20px', padding: '15px', borderRadius: '8px',
@@ -94,12 +163,10 @@ function App() {
           background: isError ? '#ffe6e6' : '#e6ffe6'
         }}>
           <h3 style={{ margin: '0 0 10px 0', color: isError ? 'red' : 'green' }}>
-            {isError ? '💥 爆発しました (500 Error)' : '🎉 成功しました (200 OK)'}
+            {isError ? `💥 ${result.status || 'Error'} Failed` : '🎉 200 OK'}
           </h3>
-          <p style={{color: 'black'}}><strong>経過時間:</strong> {duration} ms</p>
-          <pre style={{ background: 'rgba(255,255,255,0.5)', padding: '10px', color: "black" }}>
-            {JSON.stringify(result, null, 2)}
-          </pre>
+          <p style={{color: 'black'}}><strong>実際の待ち時間:</strong> {duration} ms</p>
+          <div style={{ fontSize: '12px', color: '#666' }}>※本番サーバーからのレスポンスです</div>
         </div>
       )}
     </div>
