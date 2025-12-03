@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -60,13 +62,20 @@ func main() {
 		// 4.レスポンス生成
 		// カスタムJSONが指定されていたら、デコードして返す
 		if responseBase64 != "" {
-			decodedBytes, err := base64.StdEncoding.DecodeString(responseBase64)
-			if err == nil {
-				// JSONチェック
+			// 【重要】URLデコードの過程で '+' がスペースに化ける問題の対策
+			// Base64文字列の中にスペースが混じっていたら + に戻す
+			safeBase64 := strings.ReplaceAll(responseBase64, " ", "+")
+
+			decodedBytes, err := base64.StdEncoding.DecodeString(safeBase64)
+			if err != nil {
+				// ログにエラーを出す（Cloud Runのログで見れるようになります）
+				fmt.Printf("Base64 Decode Error: %v\nString: %s\n", err, safeBase64)
+			} else {
 				var customData interface{}
 				if jsonErr := json.Unmarshal(decodedBytes, &customData); jsonErr == nil {
-					// 成功していたらJSONをそのまま返す
 					return c.JSON(http.StatusOK, customData)
+				} else {
+					fmt.Printf("JSON Unmarshal Error: %v\n", jsonErr)
 				}
 			}
 		}
