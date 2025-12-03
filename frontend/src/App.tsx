@@ -120,7 +120,7 @@ function App() {
           {copyMessage && <p style={{ margin: '5px 0 0', color: 'green', fontSize: '12px' }}>{copyMessage}</p>}
         </div>
 
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '20px', color: 'black' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
             返却したいJSONレスポンス
           </label>
