@@ -130,7 +130,7 @@ function App() {
             rows={5}
             style={{ 
               width: '100%', padding: '10px', fontFamily: 'monospace', borderRadius: '5px', border: '1px solid #ccc',
-              backgroundColor: '#fafafa'
+              backgroundColor: '#fafafa', color: 'black'
             }}
             placeholder='{"key": "value"}'
           />
